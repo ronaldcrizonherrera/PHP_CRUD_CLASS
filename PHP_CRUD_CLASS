@@ -1,0 +1,188 @@
+<?php
+/********************************	
+*********************************
+*** Ing Ronald Crizon Herrera ***
+		    _____
+		   /     \
+		  | () () |
+		   \  ^  /
+		    |||||
+		    |||||
+*********************************
+*********************************
+*********************************/
+class INGRCH_PHP_CRUD_CLASS
+{
+	private $datos=array();
+
+    /* ******************************** */
+    /* 
+		// $table_name: nombre de la tabla en la que se desea hacer la inserción
+    	// Ejemplo: 'usuarios'
+
+    	// $campos: array con los nombres de los campos en los que se desea insertar los valores
+    	// Ejemplo: ['nombre', 'apellido', 'edad']
+
+    	// $valores: array con los valores a insertar en los campos correspondientes
+    	// Ejemplo: ['Juan', 'Pérez', 30]
+    */
+    /* ******************************** */
+    public function PHP_CRUD_CLASS_Create($table_name, $campos, $valores) {
+        try {
+            
+            $modelo = new Conectar();
+            $conexion = $modelo->get_conexion();
+            
+            // Crear el SQL
+            $sql_campos = implode(',', $campos);
+            $sql_valores = implode(',', array_fill(0, count($valores), '?'));
+            $sql = "INSERT INTO $table_name ($sql_campos) VALUES ($sql_valores)";
+            //print_r($sql); echo "<br>";
+            
+            // Ejecutar la consulta
+            $statement = $conexion->prepare($sql);
+            $statement->execute($valores);
+            $lastInsertId = $conexion->lastInsertId();
+            
+            // Retornar el último id insertado
+            return $lastInsertId;
+        } catch (PDOException $e) {
+            // Manejo de excepciones
+            $mensaje = "Error: ".$e->getMessage();
+            return $mensaje;
+        }
+    }
+    
+
+    /* ******************************** */
+    /* 
+		// $table_name: nombre de la tabla en la que se desea hacer la actualización
+	    // Ejemplo: 'usuarios'
+
+	    // $id_field_name: nombre del campo por el cual se busca el registro para actualizar
+	    // Ejemplo: 'usuarios.idusuario'
+
+	    // $id_value: valor del campo $id_field_name para la busqueda
+	    // $id_value = 1234
+    */
+    /* ******************************** */
+    public function PHP_CRUD_CLASS_Read($table_name, $id_field_name, $id_value)
+	{
+	    try {
+	        $modelo = new Conectar();
+	        $conexion = $modelo->get_conexion();
+	        $sql = "SELECT * FROM $table_name WHERE $id_field_name = :id_value";
+	        $statement = $conexion->prepare($sql);
+	        $statement->bindParam(":id_value", $id_value);
+	        $statement->execute();
+	        $result = $statement->fetch(PDO::FETCH_ASSOC);
+	        return $result;
+	    } catch (PDOException $e) {
+	        // Manejo de excepciones
+	        $mensaje = "Error: ".$e->getMessage();
+            return $mensaje;
+	    }
+	}
+
+    /* ******************************** */
+    /* 
+		// $table_name: nombre de la tabla en la que se desea hacer la actualización
+	    // Ejemplo: 'usuarios'
+
+	    // $campos: array con los nombres de los campos que se desean actualizar
+	    // Ejemplo: ['nombre', 'apellido', 'edad']
+
+	    // $valores: array con los nuevos valores de los campos correspondientes
+	    // Ejemplo: ['Pedro', 'Gómez', 35]
+
+	    // $ids: array asociativo con los valores de los campos que se utilizarán para identificar el registro que se desea actualizar
+	    // Ejemplo: ['id' => 1]
+    */
+    /* ******************************** */
+    public function PHP_CRUD_CLASS_Update($table_name, $campos, $valores, $ids) {
+        try {
+            $modelo = new Conectar();
+            $conexion = $modelo->get_conexion();
+            
+            // Crear el SQL
+            $sql_set = array();
+            foreach ($campos as $i => $campo) {
+                $sql_set[] = "$campo = ?";
+            }
+            $sql_where = array();
+            foreach ($ids as $id => $valor) {
+                $sql_where[] = "$id = ?";
+            }
+            $sql_set = implode(',', $sql_set);
+            $sql_where = implode(' AND ', $sql_where);
+            $sql = "UPDATE $table_name SET $sql_set WHERE $sql_where";
+            
+            // Ejecutar la consulta
+            $statement = $conexion->prepare($sql);
+            $statement->execute(array_merge($valores, array_values($ids)));
+            
+            // Retornar si la actualización fue exitosa
+            return $statement->rowCount() > 0;
+        } catch (PDOException $e) {
+            // Manejo de excepciones
+            $mensaje = "Error: ".$e->getMessage();
+            return $mensaje;
+        }
+    }
+
+
+
+    /* ******************************** */
+    /* 
+		// $table_name: nombre de la tabla en la que se desea hacer la eliminacion
+	    // Ejemplo: 'usuarios'
+
+	    // $id_field_name: nombre del campo por el cual se busca el registro para actualizar
+	    // Ejemplo: 'usuarios.idusuario'
+
+	    // $id_value: valor del campo $id_field_name para la busqueda y eliminacion del registro
+	    // $id_value = 1234
+    */
+    /* ******************************** */
+    public function PHP_CRUD_CLASS_Delete($table_name, $id_field_name, $id_value)
+	{
+	    try {
+	        $modelo = new Conectar();
+	        $conexion = $modelo->get_conexion();
+	        $sql = "DELETE FROM $table_name WHERE $id_field_name = :id";
+	        $statement = $conexion->prepare($sql);
+	        $statement->bindParam(":id", $id_value);
+	        $statement->execute();
+	        return true;
+	    } catch (PDOException $e) {
+	        // Manejo de excepciones
+	        $mensaje = "Error: ".$e->getMessage();
+            return $mensaje;
+	    }
+	}
+	
+
+	/* ******************************** */
+    /* 
+		// $table_name: nombre de la tabla en la que se desea listar
+	    // Ejemplo: 'usuarios'
+    */
+    /* ******************************** */
+	public function PHP_CRUD_CLASS_List($table_name)
+	{
+	    try {
+	        $modelo = new Conectar();
+	        $conexion = $modelo->get_conexion();
+	        $sql = "SELECT * FROM $table_name";
+	        $statement = $conexion->prepare($sql);
+	        $statement->execute();
+	        $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+	        return $result;
+	    } catch (PDOException $e) {
+	        // Manejo de excepciones
+	        $mensaje = "Error: ".$e->getMessage();
+            return $mensaje;
+	    }
+	}
+
+}//End class
